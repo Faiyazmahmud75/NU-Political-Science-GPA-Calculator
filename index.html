@@ -25,6 +25,7 @@
         to {
             opacity: 1;
             transform: translateY(0);
+            transform: translateY(0);
         }
     }
 
@@ -66,7 +67,7 @@
     select option:focus,
     select option:checked {
         background-color: #eef2ff !important; /* indigo-50 */
-        color: #312e81 !important;           /* indigo-900 */
+        color: #312e81 !important;          /* indigo-900 */
     }
 
     ::-webkit-scrollbar {
@@ -116,8 +117,8 @@
              <p id="final-error-message" class="text-sm text-red-600 mt-2 font-medium hidden">Please calculate the CGPA for all four years before calculating the final result.</p>
         </div>
 
-         <!-- Grade Conversion Table -->
-        <section class="bg-white p-6 rounded-xl shadow-lg mb-8">
+          <!-- Grade Conversion Table -->
+        <section class="bg-white p-6 rounded-xl shadow-lg mt-8 mb-8">
             <h2 class="text-2xl font-semibold mb-4 text-gray-800 border-b pb-2">Grade Conversion Table</h2>
             <!-- Ensures table is scrollable horizontally on mobile -->
             <div class="overflow-x-auto">
@@ -166,6 +167,7 @@
             'F': { points: 0.00, range: '< 40', class: 'Fail' },
         };
         const GRADES = Object.keys(GRADE_MAP);
+        const ENGLISH_CODE = '221109'; // Code for English (Compulsory)
 
         // --- 2. Subject Lists Data ---
         const SUBJECTS = {
@@ -187,7 +189,7 @@
                 { name: 'Sociology of Bangladesh', code: '222009' },
                 { name: 'Bangladesh Society and Culture', code: '222115' },
                 { name: 'Bangladesh Economy', code: '222209' },
-                { name: 'English (Compulsory)', code: '221109' },
+                { name: 'English (Compulsory)', code: ENGLISH_CODE }, // Target subject
             ],
             3: [
                 { name: 'Political and Constitutional Development in Bangladesh', code: '231901' },
@@ -235,6 +237,13 @@
             let className = '';
             let status = '';
 
+            // Check for overall fail (e.g., if yearCGPAs[2] was 0.00 from English failure)
+            if (Object.values(yearCGPAs).some(cgpa => cgpa === 0.00)) {
+                 className = 'N/A';
+                 status = 'Fail';
+                 return { className, status };
+            }
+
             if (cgpa >= 3.00) {
                 className = 'First Class';
                 status = 'Pass';
@@ -255,10 +264,10 @@
         // --- 4. UI Generation Functions ---
 
         /**
-         * Generates the dropdown options HTML for all possible grades.
-         * @returns {string} The HTML string for grade options.
+         * Generates the dropdown options HTML for all possible standard grades.
+         * @returns {string} The HTML string for standard grade options.
          */
-        function generateGradeOptions() {
+        function generateStandardGradeOptions() {
             let options = '<option value="" disabled selected>Grade</option>';
             GRADES.forEach(grade => {
                 options += `<option value="${grade}">${grade}</option>`;
@@ -267,31 +276,52 @@
         }
 
         /**
+         * Generates the special dropdown options for the English subject (Pass/Fail).
+         * @returns {string} The HTML string for English options.
+         */
+        function generateEnglishOptions() {
+             let options = '<option value="" disabled selected>Select</option>';
+             // 'Passed' is considered a success but does not contribute points to GPA.
+             options += '<option value="Passed">Passed</option>';
+             // 'F' is failure, triggers a year fail status.
+             options += '<option value="F">F (Fail)</option>';
+             return options;
+        }
+
+
+        /**
          * Generates the HTML for a single year section card.
          * @param {number} year - The academic year (1-4).
          * @param {Array<Object>} subjects - List of subjects for the year.
          * @returns {string} The HTML string for the year card.
          */
         function generateYearSection(year, subjects) {
-            const gradeOptionsHtml = generateGradeOptions();
+            const standardGradeOptionsHtml = generateStandardGradeOptions();
+            const englishOptionsHtml = generateEnglishOptions();
             let subjectsHtml = '';
 
             subjects.forEach((sub, index) => {
+                const isEnglish = (year === 2 && sub.code === ENGLISH_CODE);
+                const optionsHtml = isEnglish ? englishOptionsHtml : standardGradeOptionsHtml;
+                const selectClass = isEnglish ? `english-select grade-select-${year}` : `grade-select-${year}`;
+                const gradeLabel = isEnglish ? '<span class="text-xs text-red-500 font-bold ml-1">(Pass/Fail Only)</span>' : '';
+
+
                 subjectsHtml += `
                     <!-- Subject Row: Ensures grade select stays right-aligned -->
                     <div class="flex items-center space-x-2 py-2 border-b last:border-b-0">
                         <!-- Label: Allows text to wrap -->
                         <label for="grade-year-${year}-sub-${index}" class="flex-grow text-sm sm:text-base text-gray-700">
-                            ${sub.name} <span class="text-xs text-gray-500">(${sub.code})</span>
+                            ${sub.name} <span class="text-xs text-gray-500">(${sub.code})</span>${gradeLabel}
                         </label>
                         <!-- Grade Dropdown: Adjusted minimum width to fit 'Select Grade' -->
-                        <select id="grade-year-${year}-sub-${index}" class="grade-select-${year} w-20 px-3 py-2
-           border border-gray-300 rounded-lg shadow-sm
-           focus:ring-indigo-500 focus:border-indigo-500
-           bg-gray-50 transition duration-200 ease-out cursor-pointer
-           text-sm sm:text-base">
+                        <select id="grade-year-${year}-sub-${index}" class="${selectClass} w-20 px-3 py-2
+             border border-gray-300 rounded-lg shadow-sm
+             focus:ring-indigo-500 focus:border-indigo-500
+             bg-gray-50 transition duration-200 ease-out cursor-pointer
+             text-sm sm:text-base">
 
-                            ${gradeOptionsHtml}
+                            ${optionsHtml}
                         </select>
                     </div>
                 `;
@@ -299,27 +329,27 @@
 
             return `
                <div id="year-${year}-card"
-    class="fade-card bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-500
-           transition duration-300 hover:shadow-xl flex flex-col h-full justify-between">
+     class="fade-card bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-500
+             transition duration-300 hover:shadow-xl flex flex-col h-full justify-between">
 
-                    <h2 class="text-2xl font-bold mb-4 text-indigo-700">Year ${year}</h2>
-                    <div class="space-y-2 mb-6">
-                        ${subjectsHtml}
+                        <h2 class="text-2xl font-bold mb-4 text-indigo-700">Year ${year}</h2>
+                        <div class="space-y-2 mb-6">
+                            ${subjectsHtml}
+                        </div>
+
+                        <button data-year="${year}"
+                            class="calculate-year-btn w-full px-4 py-2 bg-indigo-500 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transform hover:scale-[1.01]">
+                            Calculate Year ${year} CGPA
+                        </button>
+
+                        <div id="year-${year}-result"
+     class="result-anim mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg hidden">
+
+                            <p class="text-lg font-semibold text-gray-700">Year ${year} CGPA: <span id="year-${year}-cgpa" class="font-extrabold text-xl text-indigo-600"></span></p>
+                        </div>
+                        <p id="year-${year}-error" class="text-red-600 text-sm mt-2 font-medium hidden">Please select grades for all subjects.</p>
                     </div>
-
-                    <button data-year="${year}"
-                        class="calculate-year-btn w-full px-4 py-2 bg-indigo-500 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transform hover:scale-[1.01]">
-                        Calculate Year ${year} CGPA
-                    </button>
-
-                    <div id="year-${year}-result"
-    class="result-anim mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg hidden">
-
-                        <p class="text-lg font-semibold text-gray-700">Year ${year} CGPA: <span id="year-${year}-cgpa" class="font-extrabold text-xl text-indigo-600"></span></p>
-                    </div>
-                    <p id="year-${year}-error" class="text-red-600 text-sm mt-2 hidden">Please select grades for all subjects.</p>
-                </div>
-            `;
+                `;
         }
         
         /**
@@ -354,23 +384,41 @@
             const cgpaDisplay = document.getElementById(`year-${year}-cgpa`);
             const errorElement = document.getElementById(`year-${year}-error`);
 
+            // Reset visual state
+            errorElement.classList.add('hidden');
+            errorElement.textContent = 'Please select grades for all subjects.'; // Reset default message
+
             let totalPoints = 0;
-            let totalSubjects = selectElements.length;
+            let totalSubjects = 0; // Count only graded subjects
             let missingGrades = false;
+            let englishFailed = false;
 
             // 1. Validate and sum grade points
-            selectElements.forEach(select => {
+            selectElements.forEach((select, index) => {
                 const grade = select.value;
+                const subjectCode = SUBJECTS[year][index].code;
+
                 if (!grade) {
                     missingGrades = true;
                     // Add visual warning (red border)
                     select.classList.add('border-red-500', 'ring-1', 'ring-red-500');
                     select.classList.remove('border-gray-300');
                 } else {
-                    totalPoints += getGradePoint(grade);
                     // Remove visual warning
                     select.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
                     select.classList.add('border-gray-300');
+
+                    // Check if it's the English compulsory subject
+                    if (year === 2 && subjectCode === ENGLISH_CODE) {
+                        if (grade === 'F') {
+                            englishFailed = true;
+                        }
+                        // If 'Passed' or 'F', this subject is non-contributory to GPA average, so skip point/subject count.
+                    } else {
+                        // Standard subject: contribute to points and subject count
+                        totalPoints += getGradePoint(grade);
+                        totalSubjects++;
+                    }
                 }
             });
 
@@ -382,15 +430,43 @@
                 return;
             }
 
-            // 3. Calculate and display result
-            errorElement.classList.add('hidden');
+            // 3. Handle English failure (only affects Year 2)
+            if (englishFailed) {
+                // If English fails, the year result is a total fail (CGPA 0.00)
+                errorElement.textContent = `FAIL: Failure in English (Compulsory) results in a Year ${year} Fail.`;
+                errorElement.classList.remove('hidden');
+                
+                // Store 0.00 for final CGPA average calculation
+                yearCGPAs[year] = 0.00; 
+
+                // Display FAILED status (even though numerically it's 0.00)
+                cgpaDisplay.textContent = '0.00 (FAILED)';
+                cgpaDisplay.classList.add('text-red-600');
+                cgpaDisplay.classList.remove('text-indigo-600');
+                resultElement.classList.remove('hidden');
+
+                checkFinalCalculationReadiness();
+                return;
+            }
+
+            // 4. Calculate and display standard result
+            if (totalSubjects === 0) { // Safety check if a year only had non-graded subjects (unlikely here)
+                errorElement.textContent = 'Calculation error: No graded subjects found.';
+                errorElement.classList.remove('hidden');
+                yearCGPAs[year] = null;
+                return;
+            }
+
+            // Reset English failure styling if it was a standard calculation
+            cgpaDisplay.classList.add('text-indigo-600');
+            cgpaDisplay.classList.remove('text-red-600');
+
             const cgpa = totalPoints / totalSubjects;
             yearCGPAs[year] = cgpa; // Store for final calculation
 
             cgpaDisplay.textContent = cgpa.toFixed(2);
             resultElement.classList.remove('hidden');
             
-            // Re-check final calculation readiness
             checkFinalCalculationReadiness();
         }
         
@@ -434,7 +510,6 @@
             finalClassDisplay.classList.toggle('text-emerald-700', className === 'First Class');
             finalClassDisplay.classList.toggle('text-yellow-700', className === 'Second Class');
             finalClassDisplay.classList.toggle('text-orange-700', className === 'Third Class');
-
 
             finalResultElement.classList.remove('hidden');
         }
@@ -483,11 +558,15 @@
             // 3. Attach Event Listeners for Grade Inputs (to reset final result)
             document.querySelectorAll('select[id^="grade-year-"]').forEach(select => {
                 select.addEventListener('change', () => {
-                    const year = select.id.split('-')[2];
+                    // Extract the year number from the select ID (e.g., 'grade-year-2-sub-7' -> '2')
+                    const year = select.id.split('-')[2]; 
+                    
                     // Reset the calculated CGPA for the year if grade is changed
                     yearCGPAs[year] = null; 
+                    
                     // Hide the year's CGPA result
                     document.getElementById(`year-${year}-result`).classList.add('hidden');
+                    
                     // Ensure error message is hidden if a grade is now selected
                     const errorElement = document.getElementById(`year-${year}-error`);
                     if(select.value && errorElement) {
