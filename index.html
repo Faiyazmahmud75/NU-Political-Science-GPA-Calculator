@@ -259,7 +259,7 @@
          * @returns {string} The HTML string for grade options.
          */
         function generateGradeOptions() {
-            let options = '<option value="" disabled selected>Select Grade</option>';
+            let options = '<option value="" disabled selected>Grade</option>';
             GRADES.forEach(grade => {
                 options += `<option value="${grade}">${grade}</option>`;
             });
@@ -285,7 +285,7 @@
                             ${sub.name} <span class="text-xs text-gray-500">(${sub.code})</span>
                         </label>
                         <!-- Grade Dropdown: Adjusted minimum width to fit 'Select Grade' -->
-                        <select id="grade-year-${year}-sub-${index}" class="grade-select-${year} w-28 sm:w-32 md:w-36 px-3 py-2
+                        <select id="grade-year-${year}-sub-${index}" class="grade-select-${year} w-24 px-3 py-2
            border border-gray-300 rounded-lg shadow-sm
            focus:ring-indigo-500 focus:border-indigo-500
            bg-gray-50 transition duration-200 ease-out cursor-pointer
