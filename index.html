@@ -285,8 +285,12 @@
                             ${sub.name} <span class="text-xs text-gray-500">(${sub.code})</span>
                         </label>
                         <!-- Grade Dropdown: Adjusted minimum width to fit 'Select Grade' -->
-                        <select id="grade-year-${year}-sub-${index}" data-subject-index="${index}"
-                            class="grade-select-${year} w-28 sm:w-32 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 transition duration-150 ease-in-out cursor-pointer text-sm sm:text-base">
+                        <select id="grade-year-${year}-sub-${index}" class="grade-select-${year} w-28 sm:w-32 md:w-36 px-3 py-2
+           border border-gray-300 rounded-lg shadow-sm
+           focus:ring-indigo-500 focus:border-indigo-500
+           bg-gray-50 transition duration-200 ease-out cursor-pointer
+           text-sm sm:text-base">
+
                             ${gradeOptionsHtml}
                         </select>
                     </div>
@@ -294,7 +298,10 @@
             });
 
             return `
-                <div id="year-${year}-card" class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-500 transition duration-300 hover:shadow-xl">
+               <div id="year-${year}-card"
+    class="fade-card bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-500
+           transition duration-300 hover:shadow-xl flex flex-col h-full">
+
                     <h2 class="text-2xl font-bold mb-4 text-indigo-700">Year ${year}</h2>
                     <div class="space-y-2 mb-6">
                         ${subjectsHtml}
@@ -305,7 +312,9 @@
                         Calculate Year ${year} CGPA
                     </button>
 
-                    <div id="year-${year}-result" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg hidden transition duration-300">
+                    <div id="year-${year}-result"
+    class="result-anim mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg hidden">
+
                         <p class="text-lg font-semibold text-gray-700">Year ${year} CGPA: <span id="year-${year}-cgpa" class="font-extrabold text-xl text-indigo-600"></span></p>
                     </div>
                     <p id="year-${year}-error" class="text-red-600 text-sm mt-2 hidden">Please select grades for all subjects.</p>
